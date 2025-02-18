@@ -1,9 +1,10 @@
 package config
 
 import (
-	"chat_analyzer/internal/model"
 	"log"
 	"os"
+
+	"github.com/Mark-Grigorev/chat_analyzer/internal/model"
 )
 
 func Read() *model.AppConfig {

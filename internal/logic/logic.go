@@ -1,9 +1,10 @@
 package logic
 
 import (
-	"chat_analyzer/internal/clients"
 	"context"
 	"fmt"
+
+	"github.com/Mark-Grigorev/chat_analyzer/internal/clients"
 
 	tgBotAPI "github.com/go-telegram-bot-api/telegram-bot-api"
 	log "github.com/sirupsen/logrus"

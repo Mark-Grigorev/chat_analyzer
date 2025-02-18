@@ -2,12 +2,13 @@ package clients
 
 import (
 	"bytes"
-	"chat_analyzer/internal/model"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/Mark-Grigorev/chat_analyzer/internal/model"
 )
 
 const (

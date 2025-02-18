@@ -1,4 +1,4 @@
-module chat_analyzer
+module github.com/Mark-Grigorev/chat_analyzer
 
 go 1.23.2
 

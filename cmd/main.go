@@ -1,11 +1,12 @@
 package main
 
 import (
-	"chat_analyzer/internal/clients"
-	"chat_analyzer/internal/config"
-	"chat_analyzer/internal/logic"
 	"context"
 	"log"
+
+	"github.com/Mark-Grigorev/chat_analyzer/internal/clients"
+	"github.com/Mark-Grigorev/chat_analyzer/internal/config"
+	"github.com/Mark-Grigorev/chat_analyzer/internal/logic"
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/sirupsen/logrus"
