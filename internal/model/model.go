@@ -1,16 +1,18 @@
 package model
 
-type AppConfig struct {
-	ChatGPTConfig
-	TelegramConfig
+type Config struct {
+	LLMConfig      LLM
+	TelegramConfig Telegram
 }
 
-type ChatGPTConfig struct {
-	URL   string
-	Token string
-	Model string
+type LLM struct {
+	URL         string  `envconfig:"LLM_URL" required:"true"`
+	Token       string  `envconfig:"LLM_TOKEN" required:"true"`
+	Model       string  `envconfig:"LLM_MODEL" required:"true"`
+	Temperature float64 `envconfig:"LLM_TEMPERATURE" required:"true"`
 }
 
-type TelegramConfig struct {
-	Token string
+type Telegram struct {
+	Token   string  `envconfig:"TG_TOKEN" required:"true"`
+	ChatIDS []int64 `envconfig:"TG_CHAT_IDS" required:"true"`
 }

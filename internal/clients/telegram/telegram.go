@@ -13,7 +13,7 @@ type Telegram struct {
 	UpdateConfig tgBotAPI.UpdateConfig
 }
 
-func NewTelegram(token string) (*Telegram, error) {
+func New(token string) (*Telegram, error) {
 	bot, err := tgBotAPI.NewBotAPI(token)
 	if err != nil {
 		return nil, err
