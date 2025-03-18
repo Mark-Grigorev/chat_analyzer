@@ -23,5 +23,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	logic.New(tg, gpt, *logrus.New()).Start(context.Background())
+	logic.New(cfg, tg, gpt, *logrus.New()).Start(context.Background())
 }

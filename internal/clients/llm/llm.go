@@ -59,7 +59,11 @@ func (c *Client) GetLLMResponseAboutMsg(ctx context.Context, promt string) (stri
 		},
 	}
 
-	resp, err := c.llm.GenerateContent(ctx, messages)
+	resp, err := c.llm.GenerateContent(
+		ctx,
+		messages,
+		llms.WithTemperature(c.temperature),
+	)
 	if err != nil {
 		return "", err
 	}
