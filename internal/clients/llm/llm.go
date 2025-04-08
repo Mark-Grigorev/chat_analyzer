@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Mark-Grigorev/chat_analyzer/internal/model"
+	"github.com/Mark-Grigorev/chat_analyzer/internal/config"
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/openai"
 )
@@ -16,7 +16,7 @@ const (
 	Твоя задача понять, на сколько входящее сообщение является попыткой обмануть/ввести в заблуждение, или является предложением мутного заработка.`
 )
 
-type LLMClient interface {
+type LLM interface {
 	GetLLMResponseAboutMsg(ctx context.Context, promt string) (string, error)
 }
 
@@ -25,7 +25,7 @@ type Client struct {
 	temperature float64
 }
 
-func New(cfg model.LLM) (*Client, error) {
+func New(cfg config.LLMConfig) (*Client, error) {
 	llm, err := openai.New(
 		openai.WithBaseURL(cfg.URL),
 		openai.WithToken(cfg.Token),

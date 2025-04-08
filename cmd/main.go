@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/Mark-Grigorev/chat_analyzer/internal/clients/llm"
 	telegram "github.com/Mark-Grigorev/chat_analyzer/internal/clients/telegram"
@@ -10,18 +11,21 @@ import (
 	"github.com/Mark-Grigorev/chat_analyzer/internal/logic"
 
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	cfg := config.Read()
+	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 	gpt, err := llm.New(cfg.LLMConfig)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Error(err.Error())
+		return
 	}
 	tg, err := telegram.New(cfg.TelegramConfig.Token)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Error(err.Error())
+		return
 	}
-	logic.New(cfg, tg, gpt, *logrus.New()).Start(context.Background())
+	logic.New(cfg, tg, gpt, log).Start(context.Background())
 }
