@@ -21,6 +21,7 @@ func main() {
 }
 
 func run() int {
+	var err error
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
@@ -42,7 +43,10 @@ func run() int {
 		return 3
 	}
 
-	logic.New(cfg, tg, gpt, log).Start(context.Background())
+	if err = logic.New(cfg, tg, gpt, log).Start(context.Background()); err != nil {
+		log.Error(err.Error())
+		return 4
+	}
 
 	return 0
 }
