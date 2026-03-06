@@ -18,6 +18,6 @@ jobs:
   ci:
     uses: github.com/Mark-Grigorev/central-ci-cd/.github/wokflows/go/go-ci-comlete.yml@v0.0.1
     with:
-      go-version: ${{ env.GO_VERSION }}
-      linter-version: ${{ env.LINTER_VERS }}
-      ubuntu-version: ${{ env.UBUNTU_VERS }}
+      go-version: '1.23.2'
+      linter-version: 'v1.60.1'
+      ubuntu-version: '22.04'
