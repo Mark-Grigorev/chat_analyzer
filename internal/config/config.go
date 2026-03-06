@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -22,8 +24,11 @@ type TelegramConfig struct {
 	ChatIDS []int64 `envconfig:"TG_CHAT_IDS" required:"true"`
 }
 
-func Read() *Config {
+func Read() (*Config, error) {
+	op := "[ReadConfig]"
 	var config Config
-	envconfig.Process("", &config)
-	return &config
+	if err := envconfig.Process("", &config); err != nil {
+		return &Config{}, fmt.Errorf("%s - %s", op, err)
+	}
+	return &config, nil
 }

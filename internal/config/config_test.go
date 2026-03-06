@@ -6,6 +6,7 @@ import (
 
 	"github.com/Mark-Grigorev/chat_analyzer/internal/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -30,7 +31,8 @@ func SetEnv(t *testing.T) {
 func TestRead(t *testing.T) {
 	SetEnv(t)
 	expectedChatIDs := []int64{55, 22, 11}
-	cfg := config.Read()
+	cfg, err := config.Read()
+	require.NoError(t, err)
 	assert.NotNil(t, cfg)
 	assert.NotEmpty(t, cfg)
 
@@ -41,4 +43,12 @@ func TestRead(t *testing.T) {
 	assert.Equal(t, cfg.TelegramConfig.Token, tgToken)
 	assert.Equal(t, cfg.Debug, "true")
 	assert.ElementsMatch(t, cfg.TelegramConfig.ChatIDS, expectedChatIDs)
+}
+
+func TestErrRead(t *testing.T) {
+	result := &config.Config{}
+	cfg, err := config.Read()
+	require.Error(t, err, "[ReadConfig] Expected nil, but got: &config.Config{Debug:\"\", LLMConfig:config.LLMConfig{URL:\"\", Token:\"\", Model:\"\", Temperature:0}, TelegramConfig:config.TelegramConfig{Token:\"\", ChatIDS:[]int64(nil)}}")
+	assert.NotNil(t, cfg)
+	assert.Equal(t, cfg, result)
 }

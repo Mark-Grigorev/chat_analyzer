@@ -1,6 +1,8 @@
 package clients
 
 import (
+	"fmt"
+
 	tgBotAPI "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
@@ -18,10 +20,12 @@ type Client struct {
 }
 
 func New(token string) (*Client, error) {
+	op := "[New]"
 	bot, err := tgBotAPI.NewBotAPI(token)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s - %s", op, err)
 	}
+
 	updateConfig := tgBotAPI.NewUpdate(0)
 	updateConfig.Timeout = tgTimeOut
 	return &Client{
@@ -31,9 +35,19 @@ func New(token string) (*Client, error) {
 }
 
 func (c *Client) GetUpdatesChan() (tgBotAPI.UpdatesChannel, error) {
-	return c.bot.GetUpdatesChan(c.updateConfig)
+	op := "[GetUpdatesChan]"
+	ch, err := c.bot.GetUpdatesChan(c.updateConfig)
+	if err != nil {
+		return nil, fmt.Errorf("%s - %s", op, err)
+	}
+	return ch, err
 }
 
 func (c *Client) Send(message tgBotAPI.MessageConfig) (tgBotAPI.Message, error) {
-	return c.bot.Send(message)
+	op := "[Send]"
+	msg, err := c.bot.Send(message)
+	if err != nil {
+		return tgBotAPI.Message{}, fmt.Errorf("%s - %s", op, err)
+	}
+	return msg, nil
 }

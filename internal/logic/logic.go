@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Mark-Grigorev/chat_analyzer/internal/clients/llm"
 	telegram "github.com/Mark-Grigorev/chat_analyzer/internal/clients/telegram"
@@ -37,12 +38,12 @@ func New(
 	}
 }
 
-func (l *logic) Start(ctx context.Context) {
+func (l *logic) Start(ctx context.Context) error {
+	op := "[Start]"
 	l.log.Info("Bot starting")
 	updates, err := l.tgBot.GetUpdatesChan()
 	if err != nil {
-		l.log.Error("error - " + err.Error())
-		return
+		return fmt.Errorf("%s - %s", op, err)
 	}
 
 	for update := range updates {
@@ -66,4 +67,5 @@ func (l *logic) Start(ctx context.Context) {
 
 		}
 	}
+	return nil
 }

@@ -13,7 +13,9 @@ import (
 	"github.com/Mark-Grigorev/chat_analyzer/internal/config"
 	"github.com/Mark-Grigorev/chat_analyzer/internal/logic"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func setEnv(t *testing.T) {
@@ -48,8 +50,9 @@ func TestLogicOK(t *testing.T) {
 	tgMock.On("Send", mock.MatchedBy(func(msg tgbotapi.MessageConfig) bool {
 		return msg.ChatID == update.Message.Chat.ID && msg.Text == "0"
 	})).Return(tgbotapi.Message{}, nil)
-
-	logic.New(config.Read(), tgMock, llmMock, slog.Default()).Start(context.Background())
+	cfg, err := config.Read()
+	require.NoError(t, err)
+	assert.NoError(t, logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background()))
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }
@@ -60,8 +63,9 @@ func TestLogic_BadUpdateChannel(t *testing.T) {
 	tgMock.On("GetUpdatesChan").Return(nil, errors.New("fail"))
 
 	llmMock := llm.NewLLM(t)
-
-	go logic.New(config.Read(), tgMock, llmMock, slog.Default()).Start(context.Background())
+	cfg, err := config.Read()
+	require.NoError(t, err)
+	go logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
 	time.Sleep(10 * time.Millisecond)
 
 	tgMock.AssertExpectations(t)
@@ -78,7 +82,10 @@ func TestLogic_MessageNil(t *testing.T) {
 
 	llmMock := llm.NewLLM(t)
 
-	go logic.New(config.Read(), tgMock, llmMock, slog.Default()).Start(context.Background())
+	cfg, err := config.Read()
+	require.NoError(t, err)
+
+	go logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
 	time.Sleep(10 * time.Millisecond)
 
 	tgMock.AssertExpectations(t)
@@ -102,7 +109,10 @@ func TestLogic_WrongChatID(t *testing.T) {
 
 	llmMock := llm.NewLLM(t)
 
-	logic.New(config.Read(), tgMock, llmMock, slog.Default()).Start(context.Background())
+	cfg, err := config.Read()
+	require.NoError(t, err)
+
+	logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }
@@ -126,7 +136,10 @@ func TestLogic_LLMError(t *testing.T) {
 	llmMock := llm.NewLLM(t)
 	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything).Return("", errors.New("llm fail"))
 
-	logic.New(config.Read(), tgMock, llmMock, slog.Default()).Start(context.Background())
+	cfg, err := config.Read()
+	require.NoError(t, err)
+
+	logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }
@@ -151,7 +164,10 @@ func TestLogic_SendError(t *testing.T) {
 	llmMock := llm.NewLLM(t)
 	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything).Return("0", nil)
 
-	logic.New(config.Read(), tgMock, llmMock, slog.Default()).Start(context.Background())
+	cfg, err := config.Read()
+	require.NoError(t, err)
+
+	logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }

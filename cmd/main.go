@@ -21,21 +21,25 @@ func main() {
 }
 
 func run() int {
-	cfg := config.Read()
-
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
-	gpt, err := llm.New(cfg.LLMConfig)
+	cfg, err := config.Read()
 	if err != nil {
 		log.Error(err.Error())
 		return 1
 	}
 
-	tg, err := telegram.New(cfg.TelegramConfig.Token)
+	gpt, err := llm.New(cfg.LLMConfig)
 	if err != nil {
 		log.Error(err.Error())
 		return 2
+	}
+
+	tg, err := telegram.New(cfg.TelegramConfig.Token)
+	if err != nil {
+		log.Error(err.Error())
+		return 3
 	}
 
 	logic.New(cfg, tg, gpt, log).Start(context.Background())
