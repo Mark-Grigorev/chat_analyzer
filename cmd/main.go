@@ -14,18 +14,31 @@ import (
 )
 
 func main() {
+	code := run()
+	if code != 0 {
+		os.Exit(code)
+	}
+}
+
+func run() int {
 	cfg := config.Read()
+
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	slog.SetLogLoggerLevel(slog.LevelDebug)
+
 	gpt, err := llm.New(cfg.LLMConfig)
 	if err != nil {
 		log.Error(err.Error())
-		return
+		return 1
 	}
+
 	tg, err := telegram.New(cfg.TelegramConfig.Token)
 	if err != nil {
 		log.Error(err.Error())
-		return
+		return 2
 	}
+
 	logic.New(cfg, tg, gpt, log).Start(context.Background())
+
+	return 0
 }
