@@ -16,7 +16,7 @@ env:
 
 jobs:
   ci:
-    uses: github.com/Mark-Grigorev/central-ci-cd/.github/wokflows/go/go-ci-comlete.yml@v0.0.1
+    uses: github.com/Mark-Grigorev/central-ci-cd/.github/wokflows/go-ci-comlete.yml@v0.0.1
     with:
       go-version: '1.23.2'
       linter-version: 'v1.60.1'
