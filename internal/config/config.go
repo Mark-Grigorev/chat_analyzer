@@ -16,6 +16,7 @@ type LLMConfig struct {
 	URL         string  `envconfig:"LLM_URL" required:"true"`
 	Token       string  `envconfig:"LLM_TOKEN" required:"true"`
 	Model       string  `envconfig:"LLM_MODEL" required:"true"`
+	MaxTokens   int     `envconfig:"LLM_MAX_TOKENS" default:"1000"`
 	Temperature float64 `envconfig:"LLM_TEMPERATURE" required:"true"`
 }
 

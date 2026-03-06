@@ -14,6 +14,7 @@ const (
 	llmToken       = "token"
 	llmModel       = "model"
 	llmTemperature = "0.01"
+	llmMaxTokens   = "1000"
 	tgToken        = "token"
 	tgIDs          = "55,22,11"
 )
@@ -23,6 +24,7 @@ func SetEnv(t *testing.T) {
 	t.Setenv("LLM_TOKEN", llmToken)
 	t.Setenv("LLM_MODEL", llmModel)
 	t.Setenv("LLM_TEMPERATURE", llmTemperature)
+	t.Setenv("LLM_MAX_TOKENS", llmMaxTokens)
 	t.Setenv("TG_TOKEN", tgToken)
 	t.Setenv("TG_CHAT_IDS", tgIDs)
 	t.Setenv("DEBUG", "true")
@@ -40,6 +42,7 @@ func TestRead(t *testing.T) {
 	assert.Equal(t, cfg.LLMConfig.Token, llmToken)
 	assert.Equal(t, cfg.LLMConfig.Model, llmModel)
 	assert.Equal(t, fmt.Sprintf("%v", cfg.LLMConfig.Temperature), llmTemperature)
+	assert.Equal(t, fmt.Sprintf("%v", cfg.LLMConfig.MaxTokens), llmMaxTokens)
 	assert.Equal(t, cfg.TelegramConfig.Token, tgToken)
 	assert.Equal(t, cfg.Debug, "true")
 	assert.ElementsMatch(t, cfg.TelegramConfig.ChatIDS, expectedChatIDs)

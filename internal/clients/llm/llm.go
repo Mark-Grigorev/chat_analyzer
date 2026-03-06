@@ -23,6 +23,7 @@ type LLM interface {
 type Client struct {
 	llm         *openai.LLM
 	temperature float64
+	maxToken    int
 }
 
 func New(cfg config.LLMConfig) (*Client, error) {
@@ -63,6 +64,7 @@ func (c *Client) GetLLMResponseAboutMsg(ctx context.Context, promt string) (stri
 		ctx,
 		messages,
 		llms.WithTemperature(c.temperature),
+		llms.WithMaxTokens(c.maxToken),
 	)
 	if err != nil {
 		return "", err

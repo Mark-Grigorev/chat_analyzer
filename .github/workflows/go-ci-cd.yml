@@ -6,52 +6,19 @@ on:
     tags: ['v*']
   pull_request:
     branches: ["main", "feature*"]
+    
 env:
   GO_VERSION: '1.23.2'
   ALPINE_VERSION: '3.20'
   PORT: '80'
   LINTER_VERS: 'v1.60.1'
+  UBUNTU_VERS: '22.04'
+  CI_VERS: 'v0.0.1'
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkoute code
-        uses: actions/checkout@v4
-      
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-      
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: ${{ env.LINTER_VERS }}
-          args: --timeout=5m
-
-  go_test:
-    name: Tests 
-    runs-on: ubuntu-latest
-    #needs: lint
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-    
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with: 
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-      
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run tests with coverage
-        run: |
-          go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
-          go tool cover -func=coverage.txt
+  ci:
+    uses: github.com/Mark-Grigorev/central-ci-cd/.github/wokflows/go/go-ci-comlete.yml@${{ env.CI_VERS }}
+    with:
+      go-version: ${{ env.GO_VERSION }}
+      linter-version: ${{ env.LINTER_VERS }}
+      ubuntu-version: ${{ env.UBUNTU_VERS }}
