@@ -10,7 +10,7 @@ env:
   GO_VERSION: '1.23.2'
   ALPINE_VERSION: '3.20'
   PORT: '80'
-  LINTER_VERS: 'v2.0.2'
+  LINTER_VERS: 'v1.60.1'
 
 jobs:
   lint:
