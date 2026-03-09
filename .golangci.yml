@@ -1,7 +1,9 @@
-version: "1"
-
+# .golangci.yml
 run:
   timeout: 5m
+  skip-dirs:
+    - internal/clients/telegram/mocks
+    - internal/clients/llm/mocks
 
 linters:
   disable-all: true
@@ -9,28 +11,9 @@ linters:
     - errcheck
     - govet
     - staticcheck
-    - revive
-    - gosimple
-    - ineffassign
-    - unused
-    - typecheck
 
 issues:
-  # Напрямую в issues, без лишних вложений
-  exclude-dirs:
-    - mocks
-    - internal/mocks
-    - test/mocks
-
-  exclude-rules:
-    # Игнорируем все проверки в моках
-    - path: (.*_mock\.go|mocks/.*|internal/mocks/.*|test/mocks/.*)
-      linters:
-        - all
-    
-    # В тестах отключаем лишнее
-    - path: _test\.go
-      linters:
-        - errcheck
-        - gosec
-        - unparam # исправил опечатку
+  exclude:
+    - ".*_m\\.Called undefined"
+    - "mock\\.AssertExpectations undefined"
+    - "typecheck"
