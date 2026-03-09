@@ -1,0 +1,34 @@
+run:
+  timeout: 5m
+  skip-dirs:
+    - mocks
+    - internal/mocks
+    - test/mocks
+  skip-files:
+    - ".*_mock\\.go$"
+    - "mocks/.*\\.go$"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - revive
+    - gosimple
+    - ineffassign
+    - unused
+    - typecheck
+
+issues:
+  exclude-rules:
+    # Полностью игнорируем все файлы моков
+    - path: (.*_mock\.go|mocks/.*)
+      linters:
+        - all
+    
+    # В тестах игнорируем errcheck и некоторые другие линтеры
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - unparam
