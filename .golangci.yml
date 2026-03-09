@@ -1,9 +1,8 @@
 # .golangci.yml
+version: "1"
+
 run:
   timeout: 5m
-  skip-dirs:
-    - internal/clients/telegram/mocks
-    - internal/clients/llm/mocks
 
 linters:
   disable-all: true
@@ -13,7 +12,6 @@ linters:
     - staticcheck
 
 issues:
-  exclude:
-    - ".*_m\\.Called undefined"
-    - "mock\\.AssertExpectations undefined"
-    - "typecheck"
+  exclude-dirs:
+    - internal/clients/telegram/mocks
+    - internal/clients/llm/mocks
