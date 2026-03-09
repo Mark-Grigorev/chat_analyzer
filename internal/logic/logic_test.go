@@ -65,15 +65,23 @@ func TestLogic_BadUpdateChannel(t *testing.T) {
 	llmMock := llm.NewLLM(t)
 	cfg, err := config.Read()
 	require.NoError(t, err)
-	errCh := make(chan error)
+
+	errCh := make(chan error, 1)
 
 	go func() {
 		errCh <- logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
 	}()
 
-	time.Sleep(10 * time.Millisecond)
-	assert.Error(t, <-errCh, "fail")
+	select {
+	case err := <-errCh:
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "fail")
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("timeout waiting for error")
+	}
+
 	tgMock.AssertExpectations(t)
+	llmMock.AssertExpectations(t)
 }
 
 func TestLogic_MessageNil(t *testing.T) {
@@ -83,7 +91,6 @@ func TestLogic_MessageNil(t *testing.T) {
 	updates <- update
 
 	tgMock := tg.NewTelegram(t)
-
 	tgMock.On("GetUpdatesChan").Return(tgbotapi.UpdatesChannel(updates), nil)
 
 	llmMock := llm.NewLLM(t)
@@ -97,15 +104,14 @@ func TestLogic_MessageNil(t *testing.T) {
 		errCh <- logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
 	}()
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(15 * time.Millisecond)
 	select {
 	case err := <-errCh:
-		assert.Error(t, err, "any error")
-		tgMock.AssertExpectations(t)
+		t.Fatal(err)
 	default:
 		tgMock.AssertExpectations(t)
+		llmMock.AssertExpectations(t)
 	}
-
 }
 
 func TestLogic_WrongChatID(t *testing.T) {
