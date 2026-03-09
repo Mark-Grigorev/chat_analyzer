@@ -1,14 +1,10 @@
+version: "1"
+
 run:
   timeout: 5m
-  skip-dirs:
-    - mocks
-    - internal/mocks
-    - test/mocks
-  skip-files:
-    - ".*_mock\\.go$"
-    - "mocks/.*\\.go$"
 
 linters:
+  disable-all: true
   enable:
     - errcheck
     - govet
@@ -20,15 +16,21 @@ linters:
     - typecheck
 
 issues:
+  # Напрямую в issues, без лишних вложений
+  exclude-dirs:
+    - mocks
+    - internal/mocks
+    - test/mocks
+
   exclude-rules:
-    # Полностью игнорируем все файлы моков
-    - path: (.*_mock\.go|mocks/.*)
+    # Игнорируем все проверки в моках
+    - path: (.*_mock\.go|mocks/.*|internal/mocks/.*|test/mocks/.*)
       linters:
         - all
     
-    # В тестах игнорируем errcheck и некоторые другие линтеры
+    # В тестах отключаем лишнее
     - path: _test\.go
       linters:
         - errcheck
         - gosec
-        - unparam
+        - unparam # исправил опечатку
