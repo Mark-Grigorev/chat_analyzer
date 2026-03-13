@@ -1,6 +1,6 @@
 module github.com/Mark-Grigorev/chat_analyzer
 
-go 1.23.2
+go 1.24.6
 
 require (
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible

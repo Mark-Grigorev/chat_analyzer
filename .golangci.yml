@@ -1,0 +1,15 @@
+# .golangci.yml
+run:
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+
+issues:
+  exclude-dirs:
+    - internal/clients/telegram/mocks
+    - internal/clients/llm/mocks
