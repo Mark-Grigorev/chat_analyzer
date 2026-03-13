@@ -4,11 +4,14 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Mark-Grigorev/chat_analyzer/internal/clients/llm"
 	telegram "github.com/Mark-Grigorev/chat_analyzer/internal/clients/telegram"
 	"github.com/Mark-Grigorev/chat_analyzer/internal/config"
 	"github.com/Mark-Grigorev/chat_analyzer/internal/logic"
+	"github.com/Mark-Grigorev/chat_analyzer/internal/settings"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -43,7 +46,21 @@ func run() int {
 		return 3
 	}
 
-	if err = logic.New(cfg, tg, gpt, log).Start(context.Background()); err != nil {
+	s, err := settings.Load(
+		cfg.SettingsPath,
+		llm.DefaultSystemPrompt,
+		cfg.TelegramConfig.ChatIDS,
+		cfg.LLMConfig.Temperature,
+	)
+	if err != nil {
+		log.Error(err.Error())
+		return 5
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	if err = logic.New(cfg, tg, gpt, s, log).Start(ctx); err != nil {
 		log.Error(err.Error())
 		return 4
 	}

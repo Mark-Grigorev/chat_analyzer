@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,22 +11,18 @@ import (
 	"github.com/tmc/langchaingo/llms/openai"
 )
 
-const (
-	systemType = `
-	Ты ассистент в онлайн чате, анализирующий входящие сообщения. 
-	Твоя задача понять, на сколько входящее сообщение является попыткой обмануть/ввести в заблуждение, или является предложением мутного заработка.`
-)
+const DefaultSystemPrompt = "Ты ассистент в онлайн чате, анализирующий входящие сообщения.\nТвоя задача — определить, является ли сообщение скамом: попыткой обмануть, ввести в заблуждение или предложением сомнительного заработка.\nОтветь строго одной цифрой: 1 — если сообщение является скамом, 0 — если это обычное сообщение."
 
 type LLM interface {
-	GetLLMResponseAboutMsg(ctx context.Context, promt string) (string, error)
+	GetLLMResponseAboutMsg(ctx context.Context, systemPrompt, userMessage string, temperature float64) (string, error)
 }
 
 type Client struct {
-	llm         *openai.LLM
-	temperature float64
+	llm *openai.LLM
 }
 
 func New(cfg config.LLMConfig) (*Client, error) {
+	op := "[NewLLM]"
 	llm, err := openai.New(
 		openai.WithBaseURL(cfg.URL),
 		openai.WithToken(cfg.Token),
@@ -39,30 +36,29 @@ func New(cfg config.LLMConfig) (*Client, error) {
 		}),
 	)
 	if err != nil {
-		return &Client{}, nil
+		return &Client{}, fmt.Errorf("%s - %s", op, err)
 	}
 	return &Client{
-		llm:         llm,
-		temperature: cfg.Temperature,
+		llm: llm,
 	}, nil
 }
 
-func (c *Client) GetLLMResponseAboutMsg(ctx context.Context, promt string) (string, error) {
+func (c *Client) GetLLMResponseAboutMsg(ctx context.Context, systemPrompt, userMessage string, temperature float64) (string, error) {
 	messages := []llms.MessageContent{
 		{
 			Role:  llms.ChatMessageTypeSystem,
-			Parts: []llms.ContentPart{llms.TextContent{Text: systemType}},
+			Parts: []llms.ContentPart{llms.TextContent{Text: systemPrompt}},
 		},
 		{
 			Role:  llms.ChatMessageTypeHuman,
-			Parts: []llms.ContentPart{llms.TextPart(promt)},
+			Parts: []llms.ContentPart{llms.TextPart(userMessage)},
 		},
 	}
 
 	resp, err := c.llm.GenerateContent(
 		ctx,
 		messages,
-		llms.WithTemperature(c.temperature),
+		llms.WithTemperature(temperature),
 	)
 	if err != nil {
 		return "", err

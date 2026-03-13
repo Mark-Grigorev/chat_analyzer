@@ -16,6 +16,7 @@ const (
 	llmTemperature = "0.01"
 	tgToken        = "token"
 	tgIDs          = "55,22,11"
+	tgAdminUserID  = "100"
 )
 
 func SetEnv(t *testing.T) {
@@ -25,6 +26,7 @@ func SetEnv(t *testing.T) {
 	t.Setenv("LLM_TEMPERATURE", llmTemperature)
 	t.Setenv("TG_TOKEN", tgToken)
 	t.Setenv("TG_CHAT_IDS", tgIDs)
+	t.Setenv("TG_ADMIN_USER_ID", tgAdminUserID)
 	t.Setenv("DEBUG", "true")
 }
 
