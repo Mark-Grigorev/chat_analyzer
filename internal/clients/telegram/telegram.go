@@ -13,6 +13,7 @@ const (
 type Telegram interface {
 	GetUpdatesChan() (tgBotAPI.UpdatesChannel, error)
 	Send(message tgBotAPI.MessageConfig) (tgBotAPI.Message, error)
+	DeleteMessage(chatID int64, messageID int) error
 }
 type Client struct {
 	bot          *tgBotAPI.BotAPI
@@ -50,4 +51,13 @@ func (c *Client) Send(message tgBotAPI.MessageConfig) (tgBotAPI.Message, error) 
 		return tgBotAPI.Message{}, fmt.Errorf("%s - %s", op, err)
 	}
 	return msg, nil
+}
+
+func (c *Client) DeleteMessage(chatID int64, messageID int) error {
+	op := "[DeleteMessage]"
+	_, err := c.bot.Send(tgBotAPI.NewDeleteMessage(chatID, messageID))
+	if err != nil {
+		return fmt.Errorf("%s - %s", op, err)
+	}
+	return nil
 }

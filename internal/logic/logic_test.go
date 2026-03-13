@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strings"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -12,6 +12,7 @@ import (
 	tg "github.com/Mark-Grigorev/chat_analyzer/internal/clients/telegram/mocks"
 	"github.com/Mark-Grigorev/chat_analyzer/internal/config"
 	"github.com/Mark-Grigorev/chat_analyzer/internal/logic"
+	"github.com/Mark-Grigorev/chat_analyzer/internal/settings"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,8 +27,17 @@ func setEnv(t *testing.T) {
 	t.Setenv("TG_TOKEN", "token")
 	t.Setenv("TG_CHAT_IDS", "1")
 	t.Setenv("DEBUG", "true")
+	t.Setenv("TG_ADMIN_USER_ID", "100")
 }
-func TestLogicOK(t *testing.T) {
+
+func newTestSettings(t *testing.T, chatIDs []int64) *settings.Settings {
+	dir := t.TempDir()
+	s, err := settings.Load(filepath.Join(dir, "settings.json"), "system prompt", chatIDs, 0.01)
+	require.NoError(t, err)
+	return s
+}
+
+func TestLogicOK_NotScam(t *testing.T) {
 	setEnv(t)
 	update := tgbotapi.Update{
 		UpdateID: 1,
@@ -39,20 +49,73 @@ func TestLogicOK(t *testing.T) {
 	updates := make(chan tgbotapi.Update, 1)
 	updates <- update
 	close(updates)
+
 	tgMock := tg.NewTelegram(t)
 	tgMock.On("GetUpdatesChan").Return(tgbotapi.UpdatesChannel(updates), nil)
 
 	llmMock := llm.NewLLM(t)
-	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.MatchedBy(func(s string) bool {
-		return strings.Contains(s, update.Message.Text)
-	})).Return("0", nil)
+	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything, update.Message.Text, mock.Anything).Return("0", nil)
 
-	tgMock.On("Send", mock.MatchedBy(func(msg tgbotapi.MessageConfig) bool {
-		return msg.ChatID == update.Message.Chat.ID && msg.Text == "0"
-	})).Return(tgbotapi.Message{}, nil)
 	cfg, err := config.Read()
 	require.NoError(t, err)
-	assert.NoError(t, logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background()))
+	assert.NoError(t, logic.New(cfg, tgMock, llmMock, newTestSettings(t, []int64{1}), slog.Default()).Start(context.Background()))
+	tgMock.AssertExpectations(t)
+	llmMock.AssertExpectations(t)
+}
+
+func TestLogicOK_ScamDetected(t *testing.T) {
+	setEnv(t)
+	update := tgbotapi.Update{
+		UpdateID: 1,
+		Message: &tgbotapi.Message{
+			MessageID: 42,
+			Text:      "Заработай миллион за день, пиши в лс",
+			Chat:      &tgbotapi.Chat{ID: 1},
+		},
+	}
+	updates := make(chan tgbotapi.Update, 1)
+	updates <- update
+	close(updates)
+
+	tgMock := tg.NewTelegram(t)
+	tgMock.On("GetUpdatesChan").Return(tgbotapi.UpdatesChannel(updates), nil)
+	tgMock.On("DeleteMessage", update.Message.Chat.ID, update.Message.MessageID).Return(nil)
+
+	llmMock := llm.NewLLM(t)
+	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything, update.Message.Text, mock.Anything).Return("1", nil)
+
+	cfg, err := config.Read()
+	require.NoError(t, err)
+	assert.NoError(t, logic.New(cfg, tgMock, llmMock, newTestSettings(t, []int64{1}), slog.Default()).Start(context.Background()))
+	tgMock.AssertExpectations(t)
+	llmMock.AssertExpectations(t)
+}
+
+func TestLogic_DeleteError(t *testing.T) {
+	setEnv(t)
+	update := tgbotapi.Update{
+		UpdateID: 1,
+		Message: &tgbotapi.Message{
+			MessageID: 42,
+			Text:      "Заработай миллион за день, пиши в лс",
+			Chat:      &tgbotapi.Chat{ID: 1},
+		},
+	}
+	updates := make(chan tgbotapi.Update, 1)
+	updates <- update
+	close(updates)
+
+	tgMock := tg.NewTelegram(t)
+	tgMock.On("GetUpdatesChan").Return(tgbotapi.UpdatesChannel(updates), nil)
+	tgMock.On("DeleteMessage", update.Message.Chat.ID, update.Message.MessageID).Return(errors.New("delete fail"))
+
+	llmMock := llm.NewLLM(t)
+	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything, update.Message.Text, mock.Anything).Return("1", nil)
+
+	cfg, err := config.Read()
+	require.NoError(t, err)
+	// ошибка удаления логируется, но не останавливает бота
+	assert.NoError(t, logic.New(cfg, tgMock, llmMock, newTestSettings(t, []int64{1}), slog.Default()).Start(context.Background()))
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }
@@ -68,7 +131,7 @@ func TestLogic_BadUpdateChannel(t *testing.T) {
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
+		errCh <- logic.New(cfg, tgMock, llmMock, newTestSettings(t, []int64{1}), slog.Default()).Start(context.Background())
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -83,7 +146,6 @@ func TestLogic_MessageNil(t *testing.T) {
 	updates <- update
 
 	tgMock := tg.NewTelegram(t)
-
 	tgMock.On("GetUpdatesChan").Return(tgbotapi.UpdatesChannel(updates), nil)
 
 	llmMock := llm.NewLLM(t)
@@ -94,7 +156,7 @@ func TestLogic_MessageNil(t *testing.T) {
 	errCh := make(chan error, 1)
 
 	go func() {
-		errCh <- logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background())
+		errCh <- logic.New(cfg, tgMock, llmMock, newTestSettings(t, []int64{1}), slog.Default()).Start(context.Background())
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -105,7 +167,6 @@ func TestLogic_MessageNil(t *testing.T) {
 	default:
 		tgMock.AssertExpectations(t)
 	}
-
 }
 
 func TestLogic_WrongChatID(t *testing.T) {
@@ -129,8 +190,7 @@ func TestLogic_WrongChatID(t *testing.T) {
 	cfg, err := config.Read()
 	require.NoError(t, err)
 
-	assert.NoError(t, logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background()))
-
+	assert.NoError(t, logic.New(cfg, tgMock, llmMock, newTestSettings(t, []int64{1}), slog.Default()).Start(context.Background()))
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }
@@ -152,40 +212,44 @@ func TestLogic_LLMError(t *testing.T) {
 	tgMock.On("GetUpdatesChan").Return(tgbotapi.UpdatesChannel(updates), nil)
 
 	llmMock := llm.NewLLM(t)
-	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything).Return("", errors.New("llm fail"))
+	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", errors.New("llm fail"))
 
 	cfg, err := config.Read()
 	require.NoError(t, err)
 
-	assert.NoError(t, logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background()))
+	assert.NoError(t, logic.New(cfg, tgMock, llmMock, newTestSettings(t, []int64{1}), slog.Default()).Start(context.Background()))
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }
 
-func TestLogic_SendError(t *testing.T) {
+func TestLogic_AdminSetPrompt(t *testing.T) {
 	setEnv(t)
+
+	updates := make(chan tgbotapi.Update, 1)
 	update := tgbotapi.Update{
 		UpdateID: 1,
 		Message: &tgbotapi.Message{
-			Text: "hello",
-			Chat: &tgbotapi.Chat{ID: 1},
+			Text: "/setprompt new prompt text",
+			Chat: &tgbotapi.Chat{ID: 200, Type: "private"},
+			From: &tgbotapi.User{ID: 100},
 		},
 	}
-	updates := make(chan tgbotapi.Update, 1)
 	updates <- update
 	close(updates)
 
 	tgMock := tg.NewTelegram(t)
 	tgMock.On("GetUpdatesChan").Return(tgbotapi.UpdatesChannel(updates), nil)
-	tgMock.On("Send", mock.Anything).Return(tgbotapi.Message{}, errors.New("send fail"))
+	tgMock.On("Send", mock.Anything).Return(tgbotapi.Message{}, nil)
 
 	llmMock := llm.NewLLM(t)
-	llmMock.On("GetLLMResponseAboutMsg", mock.Anything, mock.Anything).Return("0", nil)
 
 	cfg, err := config.Read()
 	require.NoError(t, err)
 
-	assert.NoError(t, logic.New(cfg, tgMock, llmMock, slog.Default()).Start(context.Background()))
+	s := newTestSettings(t, []int64{1})
+	assert.NoError(t, logic.New(cfg, tgMock, llmMock, s, slog.Default()).Start(context.Background()))
+
+	assert.Equal(t, "new prompt text", s.GetSystemPrompt())
 	tgMock.AssertExpectations(t)
 	llmMock.AssertExpectations(t)
 }

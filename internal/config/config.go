@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	Debug          string `envconfig:"DEBUG" required:"true"`
+	SettingsPath   string `envconfig:"SETTINGS_PATH" default:"settings.json"`
 	LLMConfig      LLMConfig
 	TelegramConfig TelegramConfig
 }
@@ -20,8 +21,9 @@ type LLMConfig struct {
 }
 
 type TelegramConfig struct {
-	Token   string  `envconfig:"TG_TOKEN" required:"true"`
-	ChatIDS []int64 `envconfig:"TG_CHAT_IDS" required:"true"`
+	Token       string  `envconfig:"TG_TOKEN" required:"true"`
+	ChatIDS     []int64 `envconfig:"TG_CHAT_IDS" required:"true"`
+	AdminUserID int64   `envconfig:"TG_ADMIN_USER_ID" required:"true"`
 }
 
 func Read() (*Config, error) {
